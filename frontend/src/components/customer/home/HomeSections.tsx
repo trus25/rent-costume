@@ -17,7 +17,6 @@ import { Link } from 'react-router-dom';
 import { RentalSearchPanel } from './RentalSearchPanel';
 import {
   formatRupiah,
-  getProductAvailability,
   localizeContent,
   productAlt,
   productCoverImage,
@@ -25,6 +24,7 @@ import {
   productMeta,
   productName,
 } from '../../../lib/rental-utils';
+import { getProductAvailability } from '../../../lib/availability';
 import { StatusPill } from '../../shared';
 import type { DateRange, HomeArticle, HomeContent, HomeTestimonial, Locale, Product, Rental, TFunction } from '../../../types/domain';
 

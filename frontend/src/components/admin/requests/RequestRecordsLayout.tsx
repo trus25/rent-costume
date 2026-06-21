@@ -2,10 +2,12 @@ import { AlertTriangle, CalendarDays, Search, UserRound } from 'lucide-react';
 import { RequestMobileCards, RequestReviewPanel } from './RequestsView';
 import { EmptyState, StatusPill } from '../../shared';
 import { formatDateRange, productName, variantLabel } from '../../../lib/rental-utils';
+import type { RequestAvailabilityRow } from '../../../lib/availability';
 import type { Locale, Product, RentalRequest, RequestItemOutcome, TFunction } from '../../../types/domain';
 
 type RequestRecordsLayoutProps = {
   rentals: RentalRequest[];
+  availabilityRowsByReference: Record<string, RequestAvailabilityRow[]>;
   selected?: RentalRequest;
   products: Product[];
   t: TFunction;
@@ -20,6 +22,7 @@ type RequestRecordsLayoutProps = {
 
 export function RequestRecordsLayout({
   rentals,
+  availabilityRowsByReference,
   selected,
   products,
   t,
@@ -91,6 +94,7 @@ export function RequestRecordsLayout({
           <RequestReviewPanel
             rental={selected}
             products={products}
+            availabilityRows={availabilityRowsByReference[selected.reference] ?? []}
             t={t}
             locale={locale}
             canMutate={canMutateRequest}

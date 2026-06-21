@@ -3,12 +3,14 @@ import { AlertTriangle, CalendarDays, Clock3, LockKeyhole, Search, UserRound } f
 import { RecordActionBar } from '../common/AdminManagement';
 import { ActivityLog, RentalItems } from '../rentals/RentalRecordComponents';
 import { EmptyState, MobileDetailShell, StatusPill } from '../../shared';
-import { formatDateRange, getVariantAvailability, productName, variantLabel } from '../../../lib/rental-utils';
+import { formatDateRange, productName, variantLabel } from '../../../lib/rental-utils';
+import type { RequestAvailabilityRow } from '../../../lib/availability';
 import type { Locale, Product, RentalRequest, RequestItemOutcome, RequestOutcome, TFunction, Tone } from '../../../types/domain';
 
 type RequestMobileDetailProps = {
   rental: RentalRequest;
   products: Product[];
+  availabilityRows: RequestAvailabilityRow[];
   t: TFunction;
   locale: Locale;
   canMutate: boolean;
@@ -19,7 +21,7 @@ type RequestMobileDetailProps = {
   onSaveRevision: (reference: string, itemOutcomes: RequestItemOutcome[]) => void;
 };
 
-export function RequestMobileDetail({ rental, products, t, locale, canMutate, onBack, onAccept, onEdit, onReject, onSaveRevision }: RequestMobileDetailProps) {
+export function RequestMobileDetail({ rental, products, availabilityRows, t, locale, canMutate, onBack, onAccept, onEdit, onReject, onSaveRevision }: RequestMobileDetailProps) {
   return (
     <MobileDetailShell
       className="request-mobile-detail-view request-detail-shell"
@@ -43,6 +45,7 @@ export function RequestMobileDetail({ rental, products, t, locale, canMutate, on
       <RequestReviewPanel
         rental={rental}
         products={products}
+        availabilityRows={availabilityRows}
         t={t}
         locale={locale}
         canMutate={canMutate}
@@ -124,6 +127,7 @@ export function RequestMobileCards({ rentals, selectedRef, products, t, locale, 
 type RequestReviewPanelProps = {
   rental: RentalRequest;
   products: Product[];
+  availabilityRows: RequestAvailabilityRow[];
   t: TFunction;
   locale: Locale;
   canMutate: boolean;
@@ -137,6 +141,7 @@ type RequestReviewPanelProps = {
 export function RequestReviewPanel({
   rental,
   products,
+  availabilityRows,
   t,
   locale,
   canMutate,
@@ -217,6 +222,7 @@ export function RequestReviewPanel({
         <RequestOutcomeRevisionPanel
           rental={rental}
           products={products}
+          availabilityRows={availabilityRows}
           t={t}
           availabilityChecked={availabilityChecked}
           revisionOpen={revisionOpen}
@@ -278,6 +284,7 @@ export function RequestReviewPanel({
 type RequestOutcomeRevisionPanelProps = {
   rental: RentalRequest;
   products: Product[];
+  availabilityRows: RequestAvailabilityRow[];
   t: TFunction;
   availabilityChecked: boolean;
   revisionOpen: boolean;
@@ -292,6 +299,7 @@ type RequestOutcomeRevisionPanelProps = {
 function RequestOutcomeRevisionPanel({
   rental,
   products,
+  availabilityRows,
   t,
   availabilityChecked,
   revisionOpen,
@@ -318,7 +326,7 @@ function RequestOutcomeRevisionPanel({
         <div className="request-availability-grid">
           {rental.items.map((item) => {
             const product = products.find((entry) => entry.id === item.productId);
-            const available = product ? getVariantAvailability(product, item.variantId, rental) : 0;
+            const available = availabilityRows.find((row) => row.productId === item.productId && row.variantId === item.variantId)?.available ?? 0;
             return (
               <div className="request-availability-row" key={`${item.productId}-${item.variantId}`}>
                 <span>{product ? productName(product, t) : item.productId}</span>

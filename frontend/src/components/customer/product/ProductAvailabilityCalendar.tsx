@@ -10,9 +10,9 @@ import {
 } from './calendarUtils';
 import {
   formatDate,
-  getProductDayAvailability,
   variantLabel,
 } from '../../../lib/rental-utils';
+import { getProductDayAvailability } from '../../../lib/availability';
 import type { AvailabilityRow, DataAdapter, DateRange, Locale, Product, ProductDayAvailability, Rental, TFunction } from '../../../types/domain';
 
 export function ProductAvailabilityCalendar({
@@ -51,7 +51,8 @@ export function ProductAvailabilityCalendar({
   }, [availabilityRows]);
   const getDayAvailability = (day: string): ProductDayAvailability => {
     const rows = rowsByDate.get(day);
-    return rows?.length ? aggregateDayAvailability(product, day, rows) : getProductDayAvailability(product, day, rentals);
+    const fallback = getProductDayAvailability(product, day, rentals);
+    return rows?.length ? aggregateDayAvailability(product, day, rows, fallback) : fallback;
   };
   const inspected = getDayAvailability(inspectedDate);
   const weekdayLabels = useMemo(() => {

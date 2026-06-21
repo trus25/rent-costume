@@ -1,7 +1,7 @@
+import { getVariantAvailability } from './availability';
 import {
   activityText,
   appendActivity,
-  getVariantAvailability,
   hasRentalChanged,
   productName,
 } from './rental-utils';
@@ -190,9 +190,7 @@ export function acceptRequestIntoRental({
   const blockedItem = agreedItems.find((item) => {
     const product = products.find((entry) => entry.id === item.productId);
     if (!product) return true;
-    const heldAvailable = getVariantAvailability(product, item.variantId, request);
-    const dateAvailable = getVariantAvailability(product, item.variantId, request, rentals);
-    return Math.min(heldAvailable, dateAvailable) < item.qty;
+    return getVariantAvailability(product, item.variantId, request, rentals) < item.qty;
   });
 
   if (blockedItem) {

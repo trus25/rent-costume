@@ -1,6 +1,6 @@
 import { defaultDates } from '../../../mockData';
+import { availabilityRank, getProductAvailability } from '../../../lib/availability';
 import {
-  getProductAvailability,
   productMeta,
   productName,
 } from '../../../lib/rental-utils';
@@ -175,11 +175,4 @@ function sortCatalogueProducts(products: Product[], sort: string, dates: DateRan
     return sorted.sort((a, b) => availabilityRank(getProductAvailability(a, dates, rentals)) - availabilityRank(getProductAvailability(b, dates, rentals)));
   }
   return sorted;
-}
-
-function availabilityRank(value: ProductAvailabilityState) {
-  if (value === 'available') return 0;
-  if (value === 'partially_booked' || value === 'limited') return 1;
-  if (value === 'fully_booked' || value === 'full') return 2;
-  return 3;
 }

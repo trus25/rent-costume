@@ -16,7 +16,8 @@ import {
 } from '../../components/admin/clients/clientAdminUtils';
 import { SearchInput } from '../../components/shared';
 import { adminDetailPath, adminListPath, adminNewPath, type AdminSubroute } from '../../lib/admin-routes';
-import { BLOCKING_LIFECYCLES, normalizePhone } from '../../lib/rental-utils';
+import { STOCK_HOLDING_LIFECYCLES } from '../../lib/availability';
+import { normalizePhone } from '../../lib/rental-utils';
 import { resetMobileDetailScroll } from '../../lib/mobile-detail';
 import type { StateSetter } from '../../types/app';
 import type { Client, DataAdapter, Locale, Product, Rental, TFunction } from '../../types/domain';
@@ -200,7 +201,7 @@ function buildClientSummaries(clients: Client[], rentals: Rental[]): Record<stri
   return clients.reduce<Record<string, ClientRentalSummary>>((summaries, client) => {
     const clientPhone = normalizePhone(client.phone);
     const clientRentals = rentals.filter((rental) => normalizePhone(rental.phone) === clientPhone);
-    const activeRentals = clientRentals.filter((rental) => BLOCKING_LIFECYCLES.includes(rental.lifecycle));
+    const activeRentals = clientRentals.filter((rental) => STOCK_HOLDING_LIFECYCLES.includes(rental.lifecycle));
     const overdueRentals = clientRentals.filter((rental) => rental.lifecycle === 'on_rent');
     const latestRental = [...clientRentals].sort(compareRentalRecency)[0];
 

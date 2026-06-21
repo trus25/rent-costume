@@ -9,6 +9,7 @@ import type {
   SaveState,
   VariantErrorMap,
 } from './catalogueAdminUtils';
+import type { ProductStockSummary } from '../../../lib/availability';
 import type { Locale, MaintenanceBlock, Product, ProductImage, ProductVariant, TFunction } from '../../../types/domain';
 import type { InputRef, StateSetter } from '../../../types/app';
 import type { SelectOption } from '../../shared';
@@ -27,6 +28,7 @@ export type CatalogueEditorProps = {
   t: TFunction;
   locale: Locale;
   productDraft: Product;
+  stockSummary: ProductStockSummary;
   mediaItems: ProductImage[];
   coverImage?: ProductImage;
   activeTab: CatalogueEditorTab;

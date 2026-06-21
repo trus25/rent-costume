@@ -1,6 +1,6 @@
 import { ChevronRight } from 'lucide-react';
+import { getVariantAvailability } from '../../../lib/availability';
 import {
-  getVariantAvailability,
   productName,
 } from '../../../lib/rental-utils';
 import type { DateRange, Product, Rental, TFunction } from '../../../types/domain';

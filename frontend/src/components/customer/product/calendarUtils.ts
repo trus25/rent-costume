@@ -1,4 +1,4 @@
-import type { AvailabilityRow, DateRange, Locale, Product, ProductDayAvailability, ProductAvailabilityState } from '../../../types/domain';
+import type { AvailabilityRow, DateRange, Locale, Product, ProductDayAvailability } from '../../../types/domain';
 
 export function monthKey(date: string) {
   return `${date.slice(0, 7)}-01`;
@@ -36,9 +36,10 @@ export function getMonthRange(date: string): DateRange {
   return { start, end };
 }
 
-export function aggregateDayAvailability(product: Product, date: string, rows: AvailabilityRow[]): ProductDayAvailability {
+export function aggregateDayAvailability(product: Product, date: string, rows: AvailabilityRow[], fallback?: ProductDayAvailability): ProductDayAvailability {
   const variants = product.variants.map((variant) => {
     const row = rows.find((entry) => entry.variantId === variant.id);
+    const fallbackRow = fallback?.variants.find((entry) => entry.variantId === variant.id);
     return row
       ? {
           date,
@@ -50,15 +51,17 @@ export function aggregateDayAvailability(product: Product, date: string, rows: A
           available: row.available,
           state: row.state,
         }
+      : fallbackRow
+        ? fallbackRow
       : {
           date,
           productId: product.id,
           variantId: variant.id,
           label: variant.label,
           total: Number(variant.total) || 0,
-          booked: variant.held,
-          available: Math.max(0, (Number(variant.total) || 0) - variant.held),
-          state: (variant.held > 0 ? 'partially_booked' : 'available') as ProductAvailabilityState,
+          booked: 0,
+          available: Number(variant.total) || 0,
+          state: 'available' as const,
         };
   });
   const total = variants.reduce((sum, row) => sum + row.total, 0);

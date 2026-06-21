@@ -421,7 +421,7 @@ export const initialRentals: Rental[] = [
       { id: 'packed', labelId: 'Disimpan kembali', labelEn: 'Stored back', done: true },
     ],
     activity: [
-      { id: 'a4', time: '26 Mei 2026 15.10', textId: 'Barang ditandai kembali.', textEn: 'Items marked returned.' },
+      { id: 'a4', time: '26 Mei 2026 15.10', textId: 'Barang sudah kembali dan menunggu inspeksi.', textEn: 'Items returned and waiting for inspection.' },
       { id: 'a5', time: '26 Mei 2026 15.25', textId: 'Bukti bayar ditolak.', textEn: 'Payment proof rejected.' },
     ],
   },

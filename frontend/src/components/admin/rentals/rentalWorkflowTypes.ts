@@ -6,7 +6,7 @@ import type {
   Tone,
 } from '../../../types/domain';
 
-export type RentalFilter = 'all' | 'ready' | 'on_rent' | 'returned' | 'completed';
+export type RentalFilter = 'all' | 'ready' | 'on_rent' | 'returned' | 'inspected' | 'completed';
 
 export type RentalTransitionAction = {
   key: string;

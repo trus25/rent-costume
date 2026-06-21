@@ -120,13 +120,13 @@ export type RequestItemOutcome = {
 };
 
 export type RentalLifecycle =
-  | 'requested'
   | 'confirmed'
   | 'preparing'
   | 'ready_pickup'
   | 'out_delivery'
   | 'on_rent'
   | 'returned'
+  | 'inspected'
   | 'completed'
   | 'rejected'
   | 'cancelled';

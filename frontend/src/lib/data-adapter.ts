@@ -1,10 +1,12 @@
 import { defaultDates } from '../mockData';
 import {
-  addDays,
-  applyItemHoldDelta,
-  dayCount,
+  availabilityRank,
   getProductAvailability,
   getProductDayAvailability,
+} from './availability';
+import {
+  addDays,
+  dayCount,
   normalizePhone,
   productMeta,
   productName,
@@ -82,7 +84,7 @@ function readStoredRentals(fallback: Rental[]): Rental[] {
   try {
     const raw = window.localStorage.getItem(RENTALS_STORAGE_KEY);
     const parsed = raw ? (JSON.parse(raw) as unknown) : null;
-    return Array.isArray(parsed) ? parsed : fallback;
+    return Array.isArray(parsed) ? parsed as Rental[] : fallback;
   } catch {
     return fallback;
   }
@@ -125,13 +127,6 @@ function groupCartByDate(cart: CartItem[]) {
 
 function toCatalogueItemSearch(product: Product, t: TFunction) {
   return `${productName(product, t)} ${productMeta(product, t)} ${product.region} ${product.category} ${product.gender ?? 'unisex'}`.toLowerCase();
-}
-
-function availabilityRank(value: ProductAvailabilityState) {
-  if (value === 'available') return 0;
-  if (value === 'partially_booked' || value === 'limited') return 1;
-  if (value === 'fully_booked' || value === 'full') return 2;
-  return 3;
 }
 
 function sortCatalogueItems(items: Product[], sort: string, dates: DateRange, rentals: Rental[]) {
@@ -454,7 +449,6 @@ export function createLocalDataAdapter({
           const currentLatest = mergeByReference(readStoredRentals(current), current);
           return [rental, ...currentLatest.filter((entry) => entry.reference !== rental.reference)];
         });
-        setProducts((current) => applyItemHoldDelta(current, rental.items, 1));
         setClients((current) => upsertClient(current, rental));
         availabilityCache.clear();
         return { ok: true, request: acceptedRequest, rental };

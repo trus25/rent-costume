@@ -11,12 +11,12 @@ import {
 import { defaultDates, normalizeHomeContent } from '../../mockData';
 import {
   formatDateRange,
-  getVariantAvailability,
   localizeContent,
   productAlt,
   productCoverImage,
   validateDates,
 } from '../../lib/rental-utils';
+import { getVariantAvailability } from '../../lib/availability';
 import CustomerFrame from './CustomerFrame';
 import type { CartItem, DateRange, Locale, Product, Rental, Settings, TFunction } from '../../types/domain';
 import type { StateSetter } from '../../types/app';

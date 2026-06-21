@@ -1,9 +1,7 @@
 import {
   activityText,
   appendActivity,
-  applyItemHoldDelta,
   hasRentalChanged,
-  shouldReleaseHold,
 } from './rental-utils';
 import type {
   ActivityItem,
@@ -174,9 +172,7 @@ export function applyRentalWorkflowUpdate({
     return { rentals, products, rental: existing, changed: false, productsChanged: false };
   }
 
-  const nextProducts = shouldReleaseHold(existing.lifecycle, preview.lifecycle)
-    ? applyItemHoldDelta(products, existing.items, -1)
-    : products;
+  const nextProducts = products;
   const nextRental = activity ? appendActivity(preview, activity) : preview;
 
   return {
@@ -192,7 +188,8 @@ export function applyRentalWorkflowUpdate({
 export function rentalLifecycleActivity(lifecycle: RentalLifecycle): RentalActivity {
   if (lifecycle === 'ready_pickup') return activityText('Barang siap diambil.', 'Items marked ready.');
   if (lifecycle === 'out_delivery' || lifecycle === 'on_rent') return activityText('Barang keluar ke pelanggan.', 'Items released to customer.');
-  if (lifecycle === 'returned') return activityText('Barang sudah kembali.', 'Items marked returned.');
+  if (lifecycle === 'returned') return activityText('Barang sudah kembali dan menunggu inspeksi.', 'Items returned and waiting for inspection.');
+  if (lifecycle === 'inspected') return activityText('Inspeksi selesai dan stok dilepas.', 'Inspection cleared and stock released.');
   if (lifecycle === 'completed') return activityText('Sewa selesai.', 'Rental completed.');
   if (lifecycle === 'preparing') return activityText('Status dikoreksi ke persiapan.', 'Status corrected to preparing.');
   return activityText('Status pesanan dikoreksi.', 'Rental status corrected.');

@@ -3,7 +3,8 @@ import { useI18n } from './useI18n';
 import { usePersistentState } from './usePersistentState';
 import { createLocalDataAdapter } from '../lib/data-adapter';
 import { normalizeProductContent, stableJson } from '../lib/product-content';
-import { getCartItems, getVariantAvailability } from '../lib/rental-utils';
+import { getVariantAvailability } from '../lib/availability';
+import { getCartItems } from '../lib/rental-utils';
 import {
   defaultDates,
   initialClients,
@@ -45,23 +46,11 @@ export function useRentalAppState() {
   }, [setProducts]);
 
   useEffect(() => {
-    const legacyRequestedRentals = rentals.filter((rental) => rental.lifecycle === 'requested');
-    if (legacyRequestedRentals.length === 0) return;
-    setRequests((current) => {
-      const existing = new Set(current.map((request) => request.reference));
-      return [
-        ...legacyRequestedRentals.filter((rental) => !existing.has(rental.reference)).map(legacyRentalToRequest),
-        ...current,
-      ];
-    });
-    setRentals((current) => current.filter((rental) => rental.lifecycle !== 'requested'));
-  }, [rentals, setRentals, setRequests]);
-
-  useEffect(() => {
     setSettings((current) => {
       const normalizedHomeContent = normalizeHomeContent(current.homeContent);
       if (stableJson(current.homeContent) === stableJson(normalizedHomeContent)) return current;
-      return { ...current, homeContent: normalizedHomeContent };
+      const next = { ...current, homeContent: normalizedHomeContent };
+      return next;
     });
   }, [setSettings]);
 
@@ -215,13 +204,4 @@ function mergeInitialProducts(current: Product[]) {
   const missing = initialProducts.filter((product) => !byId.has(product.id)).map((product) => normalizeProductContent(product, product));
   if (missing.length > 0) changed = true;
   return changed ? [...normalized, ...missing] : current;
-}
-
-function legacyRentalToRequest(rental: Rental): RentalRequest {
-  const { lifecycle, groupedReferences, sourceChannel, ...rest } = rental;
-  return {
-    ...rest,
-    sourceChannel: sourceChannel ?? 'customer',
-    outcome: 'pending',
-  };
 }

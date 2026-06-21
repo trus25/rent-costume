@@ -20,6 +20,7 @@ export function CatalogueEditor({
   t,
   locale,
   productDraft,
+  stockSummary,
   mediaItems,
   coverImage,
   activeTab,
@@ -80,7 +81,7 @@ export function CatalogueEditor({
               <span>{t('admin.catalogue.priceSummary')}</span>
               <strong>{formatRupiah(toNonNegativeNumber(productDraft.price))}</strong>
             </span>
-            <CatalogueStockFraction product={productDraft} t={t} showHealthy className="catalogue-header-stock" />
+            <CatalogueStockFraction stock={stockSummary} t={t} showHealthy className="catalogue-header-stock" />
             <span className="catalogue-header-stat">
               <span>{t('admin.catalogue.imageSummary')}</span>
               <strong>{t('admin.catalogue.imageCount', { count: mediaItems.length, total: CATALOGUE_MAX_IMAGE_COUNT })}</strong>
@@ -126,6 +127,7 @@ export function CatalogueEditor({
             t={t}
             variants={productDraft.variants}
             variantErrors={variantErrors}
+            stockSummary={stockSummary}
             newVariant={newVariant}
             newVariantErrors={newVariantErrors}
             setNewVariant={setNewVariant}

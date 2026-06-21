@@ -5,11 +5,10 @@ import { ProductDetail } from '../../components/customer/product/ProductDetail';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { defaultDates } from '../../mockData';
 import {
-  firstAvailableVariant,
   formatDateRange,
-  getVariantAvailability,
   productName,
 } from '../../lib/rental-utils';
+import { firstAvailableVariant, getVariantAvailability } from '../../lib/availability';
 import CustomerFrame from './CustomerFrame';
 import type { CartItem, DataAdapter, DateRange, Locale, Product, Rental, Settings, TFunction } from '../../types/domain';
 import type { StateSetter } from '../../types/app';

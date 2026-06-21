@@ -8,15 +8,18 @@ import {
   productName,
 } from '../../../lib/rental-utils';
 import type { Product, TFunction } from '../../../types/domain';
+import type { ProductStockSummary } from '../../../lib/availability';
 
 export function CatalogueProductList({
   products,
+  stockSummaries,
   selectedId,
   isDirty,
   t,
   onSelect,
 }: {
   products: Product[];
+  stockSummaries: Record<string, ProductStockSummary>;
   selectedId?: string;
   isDirty: boolean;
   t: TFunction;
@@ -46,7 +49,7 @@ export function CatalogueProductList({
                   <span aria-hidden="true" />
                   <span className="status-badge-label">{product.active ? t('admin.catalogue.activeShort') : t('admin.catalogue.inactiveShort')}</span>
                 </span>
-                <CatalogueStockFraction product={product} t={t} showHealthy />
+                <CatalogueStockFraction stock={stockSummaries[product.id]} t={t} showHealthy />
                 {isDirty && selectedId === product.id ? <em className="dirty-badge">{t('admin.catalogue.unsavedBadge')}</em> : null}
               </div>
             </div>

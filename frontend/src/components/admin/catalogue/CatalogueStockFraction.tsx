@@ -1,23 +1,19 @@
 import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
-import { defaultDates } from '../../../mockData';
-import { getVariantAvailability } from '../../../lib/rental-utils';
-import type { Product, TFunction } from '../../../types/domain';
+import type { ProductStockSummary } from '../../../lib/availability';
+import type { TFunction } from '../../../types/domain';
 
 export function CatalogueStockFraction({
-  product,
+  stock,
   t,
   showHealthy = false,
   className = '',
 }: {
-  product: Product;
+  stock: ProductStockSummary;
   t: TFunction;
   showHealthy?: boolean;
   className?: string;
 }) {
-  const total = product.variants.reduce((sum, variant) => sum + (Number(variant.total) || 0), 0);
-  const available = product.active
-    ? product.variants.reduce((sum, variant) => sum + getVariantAvailability(product, variant.id, defaultDates), 0)
-    : 0;
+  const { total, available } = stock;
   const ratio = total > 0 ? available / total : 0;
   if (!showHealthy && ratio > 0.3) return null;
 

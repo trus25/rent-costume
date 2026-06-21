@@ -149,7 +149,7 @@ export function DestructiveDialogShell({ open, setOpen, title, description, chil
 
 function getOverrideLifecycleOptions(rental: Rental | null | undefined, t: TFunction) {
   const releaseLifecycle = rental?.fulfillment === 'delivery' ? 'out_delivery' : 'on_rent';
-  return (['confirmed', 'preparing', 'ready_pickup', releaseLifecycle, 'returned'] as RentalLifecycle[]).map((lifecycle) => ({
+  return (['confirmed', 'preparing', 'ready_pickup', releaseLifecycle, 'returned', 'inspected'] as RentalLifecycle[]).map((lifecycle) => ({
     value: lifecycle,
     label: t(`enum.lifecycle.${lifecycle}`),
   }));

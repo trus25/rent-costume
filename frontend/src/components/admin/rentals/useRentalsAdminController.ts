@@ -1,5 +1,6 @@
 import {
   CheckCircle2,
+  ClipboardCheck,
   CreditCard,
   PackageCheck,
   Settings,
@@ -19,7 +20,7 @@ import type {
   RentalTransitionAction,
 } from './rentalWorkflowTypes';
 
-export const rentalFilters: RentalFilter[] = ['all', 'ready', 'on_rent', 'returned', 'completed'];
+export const rentalFilters: RentalFilter[] = ['all', 'ready', 'on_rent', 'returned', 'inspected', 'completed'];
 
 type UseRentalsAdminControllerParams = {
   t: TFunction;
@@ -73,14 +74,14 @@ export function useRentalsAdminController({
   }), [setProducts, setRentals]);
 
   const operationalRentals = useMemo(
-    () => rentals.filter((rental) => rental.lifecycle !== 'requested' && rental.lifecycle !== 'rejected'),
+    () => rentals.filter((rental) => rental.lifecycle !== 'rejected'),
     [rentals],
   );
   const filterCounts = useMemo(
     () => rentalFilters.reduce<Record<RentalFilter, number>>((counts, filter) => ({
       ...counts,
       [filter]: operationalRentals.filter((rental) => matchesStatusFilter(rental, filter)).length,
-    }), { all: 0, ready: 0, on_rent: 0, returned: 0, completed: 0 }),
+    }), { all: 0, ready: 0, on_rent: 0, returned: 0, inspected: 0, completed: 0 }),
     [operationalRentals],
   );
   const filteredRentals = useMemo(() => {
@@ -104,7 +105,11 @@ export function useRentalsAdminController({
       ? operationalRentals.find((rental) => rental.reference === detailReference)
       : filteredRentals.find((rental) => rental.reference === selectedRef) ?? filteredRentals[0];
   const isCompleted = selected?.lifecycle === 'completed';
-  const canComplete = selected?.paymentStatus === 'verified' || !settings.requireVerifiedProof;
+  const canComplete = Boolean(
+    selected &&
+    selected.lifecycle === 'inspected' &&
+    (!settings.requireVerifiedProof || selected.paymentStatus === 'verified'),
+  );
   const nextAction = selected ? getNextAction({ selected, canComplete, t, workflow }) : null;
   const manualTransitions = selected
     ? getManualTransitions({ selected, canComplete, t, workflow }).filter((action) => action.lifecycle !== nextAction?.lifecycle && !action.disabled)
@@ -177,6 +182,7 @@ export function useRentalsAdminController({
     nextAction,
     manualTransitions,
     NextActionIcon,
+    requireVerifiedProof: settings.requireVerifiedProof,
     workflow,
     updateStatusFilter,
     selectRental,
@@ -195,6 +201,7 @@ function matchesStatusFilter(rental: Rental, statusFilter: RentalFilter): boolea
   if (statusFilter === 'ready') return ['preparing', 'ready_pickup'].includes(rental.lifecycle);
   if (statusFilter === 'on_rent') return rental.lifecycle === 'on_rent' || rental.lifecycle === 'out_delivery';
   if (statusFilter === 'returned') return rental.lifecycle === 'returned';
+  if (statusFilter === 'inspected') return rental.lifecycle === 'inspected';
   if (statusFilter === 'completed') return rental.lifecycle === 'completed';
   return true;
 }
@@ -236,6 +243,10 @@ function getManualTransitions({
   }
 
   if (selected.lifecycle === 'returned') {
+    candidates.push({ lifecycle: 'inspected', label: t('admin.rentals.inspect'), icon: ClipboardCheck });
+  }
+
+  if (selected.lifecycle === 'inspected') {
     candidates.push({ lifecycle: 'completed', label: t('admin.rentals.complete'), icon: CheckCircle2, disabled: !canComplete });
   }
 
@@ -272,7 +283,19 @@ function getNextAction({
     };
   }
 
-  if (selected.lifecycle === 'returned' && !canComplete) {
+  if (selected.lifecycle === 'returned') {
+    return {
+      lifecycle: 'inspected',
+      title: t('admin.rentals.nextInspectTitle'),
+      copy: t('admin.rentals.nextInspectCopy'),
+      label: t('admin.rentals.inspect'),
+      icon: ClipboardCheck,
+      tone: 'success',
+      onClick: () => workflow.transitionLifecycle(selected.reference, 'inspected'),
+    };
+  }
+
+  if (selected.lifecycle === 'inspected' && !canComplete) {
     const canVerifyProof = selected.paymentStatus === 'attached';
     return {
       title: t('admin.rentals.nextPaymentTitle'),
@@ -286,13 +309,13 @@ function getNextAction({
     };
   }
 
-  if (selected.lifecycle === 'returned') {
+  if (selected.lifecycle === 'inspected') {
     return {
       lifecycle: 'completed',
       title: t('admin.rentals.nextCompleteTitle'),
       copy: t('admin.rentals.nextCompleteCopy'),
       label: t('admin.rentals.complete'),
-      icon: CheckCircle2,
+      icon: ClipboardCheck,
       tone: 'success',
       onClick: () => workflow.transitionLifecycle(selected.reference, 'completed'),
     };

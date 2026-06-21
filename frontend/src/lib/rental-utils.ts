@@ -12,21 +12,19 @@ import type {
   PaymentStatus,
   Product,
   ProductAvailabilityState,
-  ProductDayAvailability,
   ProductImage,
-  ProductVariant,
   Rental,
   RentalRequest,
-  RentalItem,
-  RentalLifecycle,
   Settings,
   TFunction,
   Tone,
 } from '../types/domain';
+import {
+  getProductDayAvailability,
+  getVariantAvailability,
+} from './availability';
 
 export const TODAY = '2026-05-27';
-export const BLOCKING_LIFECYCLES: RentalLifecycle[] = ['confirmed', 'preparing', 'ready_pickup', 'out_delivery', 'on_rent'];
-export const RELEASED_LIFECYCLES: RentalLifecycle[] = ['returned', 'completed', 'rejected', 'cancelled'];
 
 function toDate(value: string) {
   return new Date(`${value}T00:00:00`);
@@ -96,44 +94,6 @@ export function getCartItems(cart: CartItem[], products: Product[]): CartLineIte
     .filter((item): item is CartLineItem => Boolean(item));
 }
 
-export function getProductAvailability(product: Product, dates: DateRange, rentals: Rental[]): ProductAvailabilityState {
-  if (!product.active || product.maintenanceBlocks.some((block) => overlaps(dates, block))) return 'unavailable';
-  const variantStates = product.variants.map((variant) => ({
-    available: getVariantAvailability(product, variant.id, dates, rentals),
-    booked: Array.isArray(rentals) ? getVariantBookedQuantity(product.id, variant.id, dates, rentals) : variant.held,
-  }));
-  if (variantStates.every((variant) => variant.available <= 0)) return 'fully_booked';
-  if (variantStates.some((variant) => variant.booked > 0)) return 'partially_booked';
-  return 'available';
-}
-
-export function getMaintenanceBlock(product: Product | null | undefined, dates: DateRange): MaintenanceBlock | null {
-  const blocks = Array.isArray(product?.maintenanceBlocks) ? product.maintenanceBlocks : [];
-  return blocks.find((block) => overlaps(dates, block)) ?? null;
-}
-
-export function getMaintenanceReason(product: Product | null | undefined, dates: DateRange): string {
-  return String(getMaintenanceBlock(product, dates)?.reason ?? '').trim();
-}
-
-export function getVariantAvailability(product: Product, variantId: string, dates: DateRange, rentals?: Rental[]): number {
-  if (product.maintenanceBlocks.some((block) => overlaps(dates, block))) return 0;
-  const variant = product.variants.find((entry) => entry.id === variantId);
-  if (!variant) return 0;
-  if (Array.isArray(rentals)) {
-    return Math.max(0, (Number(variant.total) || 0) - getVariantBookedQuantity(product.id, variantId, dates, rentals));
-  }
-  return Math.max(0, (Number(variant.total) || 0) - variant.held);
-}
-
-export function firstAvailableVariant(product: Product, dates: DateRange, rentals: Rental[]): ProductVariant {
-  return product.variants.find((variant) => getVariantAvailability(product, variant.id, dates, rentals) > 0) ?? product.variants[0];
-}
-
-export function overlaps(a: DateRange, b: DateRange) {
-  return a.start <= b.end && b.start <= a.end;
-}
-
 export function availabilityTone(value: ProductAvailabilityState): Tone {
   if (value === 'available') return 'success';
   if (value === 'partially_booked' || value === 'limited') return 'warning';
@@ -145,48 +105,6 @@ export function variantSummary(product: Product, dates: DateRange, locale: Local
   if (available.length === 0) return t('customer.product.unavailableAction');
   if (available.length === 1) return `${variantLabel(t, available[0].label)} ${locale === 'id' ? 'tersedia' : 'available'}`;
   return `${available.map((variant) => variantLabel(t, variant.label)).join(', ')}`;
-}
-
-export function getVariantBookedQuantity(productId: string, variantId: string, dates: DateRange, rentals: Rental[]) {
-  return rentals
-    .filter((rental) => BLOCKING_LIFECYCLES.includes(rental.lifecycle) && overlaps(dates, rental))
-    .flatMap((rental) => rental.items)
-    .filter((item) => item.productId === productId && item.variantId === variantId)
-    .reduce((sum, item) => sum + item.qty, 0);
-}
-
-export function getProductDayAvailability(product: Product, date: string, rentals: Rental[] = []): ProductDayAvailability {
-  const range = { start: date, end: date };
-  const unavailable = !product.active || product.maintenanceBlocks.some((block) => overlaps(range, block));
-  const rows = product.variants.map((variant) => {
-    const booked = Array.isArray(rentals)
-      ? getVariantBookedQuantity(product.id, variant.id, range, rentals)
-      : variant.held;
-    const total = Number(variant.total) || 0;
-    const available = unavailable ? 0 : Math.max(0, total - booked);
-    return {
-      date,
-      productId: product.id,
-      variantId: variant.id,
-      label: variant.label,
-      total,
-      booked,
-      available,
-      state: (unavailable ? 'unavailable' : available <= 0 ? 'fully_booked' : booked > 0 ? 'partially_booked' : 'available') as ProductAvailabilityState,
-    };
-  });
-  const total = rows.reduce((sum, row) => sum + row.total, 0);
-  const booked = rows.reduce((sum, row) => sum + row.booked, 0);
-  const available = rows.reduce((sum, row) => sum + row.available, 0);
-  const state = unavailable
-    ? 'unavailable'
-    : available <= 0
-      ? 'fully_booked'
-      : booked > 0
-        ? 'partially_booked'
-        : 'available';
-
-  return { date, productId: product.id, total, booked, available, state, variants: rows };
 }
 
 export function findNextAvailableWindow(product: Product, variantId: string | null | undefined, dates: DateRange, rentals: Rental[], maxDays = 90): DateRange | null {
@@ -335,13 +253,13 @@ export function productGallery(product: Product, t: TFunction): ProductImage[] {
 
   if (uniqueImages.length === 0) {
     return fallbackSrc
-      ? [{ id: `${product.id}-legacy-cover`, src: fallbackSrc, alt: fallbackAlt, label: fallbackLabel, isCover: true }]
+      ? [{ id: `${product.id}-fallback-cover`, src: fallbackSrc, alt: fallbackAlt, label: fallbackLabel, isCover: true }]
       : [];
   }
 
   const markedCoverIndex = uniqueImages.findIndex((image) => image.isCover);
-  const legacyCoverIndex = fallbackSrc ? uniqueImages.findIndex((image) => image.src === fallbackSrc) : -1;
-  const coverIndex = markedCoverIndex >= 0 ? markedCoverIndex : legacyCoverIndex >= 0 ? legacyCoverIndex : 0;
+  const fallbackCoverIndex = fallbackSrc ? uniqueImages.findIndex((image) => image.src === fallbackSrc) : -1;
+  const coverIndex = markedCoverIndex >= 0 ? markedCoverIndex : fallbackCoverIndex >= 0 ? fallbackCoverIndex : 0;
   const gallery = uniqueImages.map((image, index) => ({ ...image, isCover: index === coverIndex }));
   const cover = gallery[coverIndex];
   return cover ? [cover, ...gallery.filter((_, index) => index !== coverIndex)] : gallery;
@@ -445,30 +363,9 @@ export function updateVariantTotal(product: Product, variantId: string, delta: n
   return {
     ...product,
     variants: product.variants.map((variant) =>
-      variant.id === variantId ? { ...variant, total: Math.max(variant.held, (Number(variant.total) || 0) + delta) } : variant,
+      variant.id === variantId ? { ...variant, total: Math.max(1, (Number(variant.total) || 0) + delta) } : variant,
     ),
   };
-}
-
-export function applyItemHoldDelta(products: Product[], items: RentalItem[], delta: number): Product[] {
-  return products.map((product) => {
-    const productItems = items.filter((item) => item.productId === product.id);
-    if (productItems.length === 0) return product;
-
-    return {
-      ...product,
-      variants: product.variants.map((variant) => {
-        const qtyDelta = productItems
-          .filter((item) => item.variantId === variant.id)
-          .reduce((sum, item) => sum + item.qty * delta, 0);
-        return qtyDelta === 0 ? variant : { ...variant, held: Math.max(0, Math.min(Number(variant.total) || 0, variant.held + qtyDelta)) };
-      }),
-    };
-  });
-}
-
-export function shouldReleaseHold(previousLifecycle: RentalLifecycle, nextLifecycle: RentalLifecycle) {
-  return BLOCKING_LIFECYCLES.includes(previousLifecycle) && ['returned', 'rejected', 'cancelled'].includes(nextLifecycle);
 }
 
 export function localizedData(item: Record<string, unknown>, field: string, t: TFunction): string {
@@ -486,7 +383,8 @@ export function getAdminMetrics(rentals: Rental[], requests: RentalRequest[] = [
     deliveryRequests: pendingRequests.filter((request) => request.fulfillment === 'delivery').length,
     ready: rentals.filter((rental) => ['preparing', 'ready_pickup'].includes(rental.lifecycle)).length,
     outWithCustomer: rentals.filter((rental) => ['out_delivery', 'on_rent'].includes(rental.lifecycle)).length,
-    returnedOpen: rentals.filter((rental) => rental.lifecycle === 'returned' && rental.paymentStatus !== 'verified').length,
+    returnedOpen: rentals.filter((rental) => rental.lifecycle === 'returned').length,
+    inspectedOpen: rentals.filter((rental) => rental.lifecycle === 'inspected').length,
     overdue: rentals.filter((rental) => rental.lifecycle === 'on_rent').length,
     completed: rentals.filter((rental) => rental.lifecycle === 'completed').length,
   };

@@ -26,7 +26,7 @@ import { useCatalogueAdminController } from '../../components/admin/catalogue/us
 import type { CatalogueEditorTab } from '../../components/admin/catalogue/catalogueEditorUtils';
 import { SearchInput } from '../../components/shared';
 import { adminDetailPath, adminListPath, adminNewPath, type AdminSubroute } from '../../lib/admin-routes';
-import type { DataAdapter, Locale, Product, TFunction } from '../../types/domain';
+import type { DataAdapter, Locale, Product, Rental, TFunction } from '../../types/domain';
 import type { StateSetter } from '../../types/app';
 
 export default function CatalogueAdmin({
@@ -34,6 +34,7 @@ export default function CatalogueAdmin({
   locale,
   products,
   setProducts,
+  rentals,
   dataAdapter,
   route,
 }: {
@@ -41,6 +42,7 @@ export default function CatalogueAdmin({
   locale: Locale;
   products: Product[];
   setProducts: StateSetter<Product[]>;
+  rentals: Rental[];
   dataAdapter?: DataAdapter;
   route: AdminSubroute;
 }) {
@@ -52,6 +54,7 @@ export default function CatalogueAdmin({
     t,
     products,
     setProducts,
+    rentals,
     dataAdapter,
     selectedProductId,
     onOpenProduct: (productId) => navigate(adminDetailPath('catalogue', productId, location.search)),
@@ -76,7 +79,7 @@ export default function CatalogueAdmin({
   }
 
   if (route.kind === 'detail') {
-    if (!controller.selected || !controller.productDraft) return <Navigate to={listPath} replace />;
+    if (!controller.selected || !controller.productDraft || !controller.stockSummary) return <Navigate to={listPath} replace />;
 
     return (
       <section className="admin-route-page catalogue-detail-page">
@@ -84,6 +87,7 @@ export default function CatalogueAdmin({
           t={t}
           locale={locale}
           productDraft={controller.productDraft}
+          stockSummary={controller.stockSummary}
           mediaItems={controller.mediaItems}
           coverImage={controller.coverImage}
           activeTab={controller.activeTab}
@@ -150,6 +154,7 @@ export default function CatalogueAdmin({
         />
         <CatalogueProductList
           products={controller.filtered}
+          stockSummaries={controller.stockSummaries}
           selectedId={undefined}
           isDirty={controller.isDirty}
           t={t}

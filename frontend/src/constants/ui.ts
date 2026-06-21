@@ -7,7 +7,7 @@ import {
   LayoutDashboard,
   LoaderCircle,
   PackageCheck,
-  RotateCcw,
+  SearchCheck,
   SlidersHorizontal,
   Truck,
   Users,
@@ -19,26 +19,26 @@ import type { PaymentStatus, ProductAvailabilityState, RentalLifecycle, Tone } f
 export type AdminSectionId = 'requests' | 'rentals' | 'catalogue' | 'clients' | 'settings';
 
 export const lifecycleTone: Record<RentalLifecycle, Tone> = {
-  requested: 'warning',
   confirmed: 'success',
   preparing: 'info',
   ready_pickup: 'info',
   out_delivery: 'info',
   on_rent: 'warning',
-  returned: 'success',
+  returned: 'warning',
+  inspected: 'success',
   completed: 'success',
   rejected: 'danger',
   cancelled: 'danger',
 };
 
 export const lifecycleIcon: Record<RentalLifecycle, LucideIcon> = {
-  requested: Clock,
   confirmed: CheckCircle,
   preparing: LoaderCircle,
   ready_pickup: PackageCheck,
   out_delivery: Truck,
   on_rent: Truck,
-  returned: RotateCcw,
+  returned: SearchCheck,
+  inspected: BadgeCheck,
   completed: BadgeCheck,
   rejected: XCircle,
   cancelled: XCircle,

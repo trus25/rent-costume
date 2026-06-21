@@ -79,7 +79,7 @@ export function getDraftImages(product: Product | null | undefined, t: TFunction
 
   if (normalized.length === 0 && product.image) {
     return [{
-      id: `${product.id}-legacy-cover`,
+      id: `${product.id}-fallback-cover`,
       src: product.image,
       alt: fallbackAlt,
       label: fallbackLabel,
@@ -146,7 +146,7 @@ function normalizeVariantForSave(variant: ProductVariant, productContext: {
   return {
     ...rest,
     label: String(variant.label).trim(),
-    total: Math.max(Number(variant.held) || 0, Math.max(1, Number(variant.total) || 1)),
+    total: Math.max(1, Number(variant.total) || 1),
     held: Number(variant.held) || 0,
     notes: toSourceContent(
       variant.notes,
@@ -191,13 +191,13 @@ export function validateDetails(product: Product | null | undefined, t: TFunctio
   };
 }
 
-export function validateVariants(variants: ProductVariant[], t: TFunction): VariantErrorMap {
+export function validateVariants(variants: ProductVariant[], t: TFunction, heldByVariant: Record<string, number> = {}): VariantErrorMap {
   const errors: VariantErrorMap = {};
   const labels = new Map<string, string[]>();
   variants.forEach((variant) => {
     const label = String(variant.label ?? '').trim();
     const total = Number(variant.total);
-    const held = Number(variant.held) || 0;
+    const held = heldByVariant[variant.id] ?? 0;
     errors[variant.id] = {};
     if (!label) errors[variant.id].label = t('common.required');
     if (!Number.isFinite(total) || total < 1) errors[variant.id].total = t('admin.catalogue.errorStockMin');

@@ -16,24 +16,25 @@ import {
   useRequestsAdminController,
 } from '../../components/admin/requests/useRequestsAdminController';
 import { adminDetailPath, adminListPath, adminNewPath, searchWithout, type AdminSubroute } from '../../lib/admin-routes';
-import type { DataAdapter, Locale, Product, RentalRequest, TFunction } from '../../types/domain';
+import { getRequestAvailabilityRows } from '../../lib/availability';
+import type { DataAdapter, Locale, Product, Rental, RentalRequest, TFunction } from '../../types/domain';
 
 type RequestsAdminProps = {
   t: TFunction;
   locale: Locale;
   requests: RentalRequest[];
+  rentals: Rental[];
   products: Product[];
   dataAdapter: DataAdapter;
   route: AdminSubroute;
 };
 
-export default function RequestsAdmin({ t, locale, requests, products, dataAdapter, route }: RequestsAdminProps) {
+export default function RequestsAdmin({ t, locale, requests, rentals, products, dataAdapter, route }: RequestsAdminProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const listSearch = searchWithout(location.search, ['reference']);
   const listPath = adminListPath('requests', listSearch);
   const detailReference = route.kind === 'detail' ? route.id : undefined;
-  const legacyReference = route.kind === 'list' ? new URLSearchParams(location.search).get('reference') : null;
   const controller = useRequestsAdminController({
     t,
     requests,
@@ -44,10 +45,9 @@ export default function RequestsAdmin({ t, locale, requests, products, dataAdapt
     onCloseDetail: () => navigate(listPath),
     onCreateSuccess: (rental) => navigate(adminDetailPath('requests', rental.reference), { replace: true }),
   });
-
-  if (legacyReference) {
-    return <Navigate to={adminDetailPath('requests', legacyReference, listSearch)} replace />;
-  }
+  const availabilityRowsByReference = Object.fromEntries(
+    controller.filtered.map((request) => [request.reference, getRequestAvailabilityRows(request, products, rentals)]),
+  );
 
   if (route.kind === 'new') {
     return (
@@ -76,6 +76,7 @@ export default function RequestsAdmin({ t, locale, requests, products, dataAdapt
         <RequestReviewPanel
           rental={controller.selected}
           products={products}
+          availabilityRows={getRequestAvailabilityRows(controller.selected, products, rentals)}
           t={t}
           locale={locale}
           canMutate={controller.canMutateRequest}
@@ -162,6 +163,7 @@ export default function RequestsAdmin({ t, locale, requests, products, dataAdapt
 
         <RequestRecordsLayout
           rentals={controller.filtered}
+          availabilityRowsByReference={availabilityRowsByReference}
           selected={undefined}
           products={products}
           t={t}

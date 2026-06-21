@@ -33,6 +33,7 @@ type RentalWorkflowDetailProps = {
   NextActionIcon: LucideIcon;
   isCompleted: boolean;
   canComplete: boolean;
+  requireVerifiedProof: boolean;
   correctionOpen: boolean;
   setCorrectionOpen: StateSetter<boolean>;
   setOverrideOpen: StateSetter<boolean>;
@@ -52,6 +53,7 @@ export function RentalWorkflowDetail({
   NextActionIcon,
   isCompleted,
   canComplete,
+  requireVerifiedProof,
   correctionOpen,
   setCorrectionOpen,
   setOverrideOpen,
@@ -61,7 +63,7 @@ export function RentalWorkflowDetail({
   const nextActionDesktopReasonId = `${selected.reference}-next-action-desktop-reason`;
   const nextActionMobileReasonId = `${selected.reference}-next-action-mobile-reason`;
   const nextActionReason = nextAction?.disabledReason ?? nextAction?.copy;
-  const showProofBlocker = selected.lifecycle === 'returned' && !canComplete;
+  const showPaymentWarning = requireVerifiedProof && selected.lifecycle === 'inspected' && selected.paymentStatus !== 'verified';
 
   return (
     <MobileDetailShell
@@ -126,12 +128,12 @@ export function RentalWorkflowDetail({
           </div>
         </div>
 
-        {showProofBlocker ? (
+        {showPaymentWarning ? (
           <div className="inline-alert warning rental-blocker-alert" role="status">
             <AlertTriangle aria-hidden="true" />
             <div>
-              <strong>{t('admin.rentals.completeBlockedTitle')}</strong>
-              <p>{nextAction?.disabled ? nextActionReason : t('admin.rentals.completeBlocked')}</p>
+              <strong>{t('admin.rentals.paymentPendingTitle')}</strong>
+              <p>{t('admin.rentals.paymentPendingCopy')}</p>
             </div>
           </div>
         ) : null}
@@ -165,7 +167,7 @@ export function RentalWorkflowDetail({
               <CreditCard aria-hidden="true" />
               <div>
                 <span className="section-kicker">{t('admin.rentals.paymentTitle')}</span>
-                <p>{canComplete ? t('admin.rentals.paymentReady') : t('admin.rentals.paymentBlocked')}</p>
+                <p>{selected.paymentStatus === 'verified' ? t('admin.rentals.paymentReady') : t('admin.rentals.paymentBlocked')}</p>
               </div>
             </div>
             <PaymentDeliveryEditor
@@ -218,7 +220,6 @@ export function RentalWorkflowDetail({
                     );
                   })}
                 </div>
-                {!canComplete && selected.lifecycle === 'returned' ? <p className="validation-message">{t('admin.rentals.completeBlocked')}</p> : null}
               </div>
             ) : null}
           </div>
@@ -375,7 +376,7 @@ type LifecycleRoadmapProps = {
 };
 
 function LifecycleRoadmap({ rental, t }: LifecycleRoadmapProps) {
-  const steps: RentalLifecycle[] = ['confirmed', 'preparing', 'ready_pickup', rental.fulfillment === 'delivery' ? 'out_delivery' : 'on_rent', 'returned', 'completed'];
+  const steps: RentalLifecycle[] = ['confirmed', 'preparing', 'ready_pickup', rental.fulfillment === 'delivery' ? 'out_delivery' : 'on_rent', 'returned', 'inspected', 'completed'];
   const currentIndex = steps.indexOf(rental.lifecycle);
 
   return (

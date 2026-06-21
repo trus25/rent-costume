@@ -414,6 +414,7 @@ function SectionOperationsSummary({ section, metrics, t }: SectionOperationsSumm
         <Metric tone="success" value={metrics.ready} title={t('admin.metrics.pickup')} copy={t('admin.metrics.pickupCopy')} to="/admin/rentals?status=ready" />
         <Metric tone="neutral" value={metrics.outWithCustomer} title={t('admin.metrics.overdue')} copy={t('admin.metrics.overdueCopy')} to="/admin/rentals?status=on_rent" />
         <Metric tone="warning" value={metrics.returnedOpen} title={t('admin.metrics.returned')} copy={t('admin.metrics.returnedCopy')} to="/admin/rentals?status=returned" />
+        <Metric tone="success" value={metrics.inspectedOpen} title={t('admin.metrics.inspected')} copy={t('admin.metrics.inspectedCopy')} to="/admin/rentals?status=inspected" />
         <Metric tone="success" value={metrics.completed} title={t('admin.metrics.completed')} copy={t('admin.metrics.completedCopy')} to="/admin/rentals?status=completed" />
       </AdminMetricStrip>
     </section>

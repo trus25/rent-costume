@@ -18,6 +18,7 @@ export function VariantsTab({
   addVariant,
   variantLabelRef,
   updateSource,
+  stockSummary,
 }: Pick<
   CatalogueEditorProps,
   | 't'
@@ -31,6 +32,7 @@ export function VariantsTab({
   | 'addVariant'
   | 'variantLabelRef'
   | 'updateSource'
+  | 'stockSummary'
 > & {
   variants: CatalogueEditorProps['productDraft']['variants'];
   variantErrors: CatalogueEditorProps['variantErrors'];
@@ -55,7 +57,7 @@ export function VariantsTab({
       <div className="variant-management">
         {variants.map((variant) => {
           const errors = variantErrors[variant.id] ?? {};
-          const held = Number(variant.held) || 0;
+          const held = stockSummary.variants.find((entry) => entry.variantId === variant.id)?.held ?? 0;
           const total = Number(variant.total) || 0;
           const available = Math.max(0, total - held);
           return (

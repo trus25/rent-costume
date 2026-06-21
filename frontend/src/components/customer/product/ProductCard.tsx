@@ -4,8 +4,6 @@ import {
   findNextAvailableWindow,
   formatDateRange,
   formatRupiah,
-  getMaintenanceReason,
-  getProductAvailability,
   productAlt,
   productCoverImage,
   productDescription,
@@ -13,6 +11,7 @@ import {
   productName,
   variantSummary,
 } from '../../../lib/rental-utils';
+import { getMaintenanceReason, getProductAvailability } from '../../../lib/availability';
 import type { DateRange, Locale, Product, ProductAvailabilityState, Rental, TFunction } from '../../../types/domain';
 
 export function ProductCard({

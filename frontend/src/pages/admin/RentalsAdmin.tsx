@@ -25,7 +25,6 @@ export default function RentalsAdmin({ t, locale, rentals, setRentals, products,
   const listSearch = searchWithout(location.search, ['reference']);
   const listPath = adminListPath('rentals', listSearch);
   const detailReference = route.kind === 'detail' ? route.id : undefined;
-  const legacyReference = route.kind === 'list' ? new URLSearchParams(location.search).get('reference') : null;
   const controller = useRentalsAdminController({
     t,
     rentals,
@@ -37,10 +36,6 @@ export default function RentalsAdmin({ t, locale, rentals, setRentals, products,
     onOpenDetail: (reference) => navigate(adminDetailPath('rentals', reference, listSearch)),
     onCloseDetail: () => navigate(listPath),
   });
-
-  if (legacyReference) {
-    return <Navigate to={adminDetailPath('rentals', legacyReference, listSearch)} replace />;
-  }
 
   if (route.kind === 'new') {
     return <Navigate to={listPath} replace />;
@@ -63,6 +58,7 @@ export default function RentalsAdmin({ t, locale, rentals, setRentals, products,
           NextActionIcon={controller.NextActionIcon}
           isCompleted={controller.isCompleted}
           canComplete={controller.canComplete}
+          requireVerifiedProof={controller.requireVerifiedProof}
           correctionOpen={controller.correctionOpen}
           setCorrectionOpen={controller.setCorrectionOpen}
           setOverrideOpen={controller.setOverrideOpen}

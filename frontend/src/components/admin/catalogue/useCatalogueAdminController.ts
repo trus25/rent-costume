@@ -14,6 +14,7 @@ import {
   validateNewVariant,
   validateVariants,
 } from './catalogueAdminUtils';
+import { getProductStockSummaries, getProductStockSummary } from '../../../lib/availability';
 import { productCoverImage, productName, toSourceContent } from '../../../lib/rental-utils';
 import { resetMobileDetailScroll } from '../../../lib/mobile-detail';
 import type {
@@ -26,13 +27,14 @@ import type {
 } from './catalogueAdminUtils';
 import type { CatalogueEditorTab } from './catalogueEditorUtils';
 import type { MaintenanceDraft, MediaItemsUpdater, ProductDraftPatch, VariantPatch } from './catalogueEditorTypes';
-import type { DataAdapter, Product, ProductVariant, TFunction } from '../../../types/domain';
+import type { DataAdapter, Product, ProductVariant, Rental, TFunction } from '../../../types/domain';
 import type { StateSetter } from '../../../types/app';
 
 type UseCatalogueAdminControllerParams = {
   t: TFunction;
   products: Product[];
   setProducts: StateSetter<Product[]>;
+  rentals: Rental[];
   dataAdapter?: DataAdapter;
   selectedProductId?: string;
   onOpenProduct?: (productId: string) => void;
@@ -43,6 +45,7 @@ export function useCatalogueAdminController({
   t,
   products,
   setProducts,
+  rentals,
   dataAdapter,
   selectedProductId,
   onOpenProduct,
@@ -68,9 +71,17 @@ export function useCatalogueAdminController({
     : products.find((product) => product.id === selectedId) ?? products[0];
   const filtered = products.filter((product) => productName(product, t).toLowerCase().includes(query.trim().toLowerCase()));
   const mediaItems = useMemo(() => getDraftImages(productDraft, t), [productDraft, t]);
+  const stockSummaries = useMemo(() => getProductStockSummaries(products, rentals), [products, rentals]);
+  const stockSummary = useMemo(
+    () => productDraft ? getProductStockSummary(productDraft, rentals) : null,
+    [productDraft, rentals],
+  );
   const coverImage = mediaItems.find((image) => image.isCover) ?? mediaItems[0];
   const detailErrors = useMemo<DetailErrorMap>(() => validateDetails(productDraft, t), [productDraft, t]);
-  const variantErrors = useMemo<VariantErrorMap>(() => validateVariants(productDraft?.variants ?? [], t), [productDraft?.variants, t]);
+  const variantErrors = useMemo<VariantErrorMap>(() => {
+    const heldByVariant = Object.fromEntries((stockSummary?.variants ?? []).map((variant) => [variant.variantId, variant.held]));
+    return validateVariants(productDraft?.variants ?? [], t, heldByVariant);
+  }, [productDraft?.variants, stockSummary, t]);
   const hasValidationErrors = hasErrors(detailErrors) || Object.values(variantErrors).some(hasErrors);
   const isDirty = Boolean(selected && productDraft && stableProductJson(selected) !== stableProductJson(productDraft));
 
@@ -141,7 +152,7 @@ export function useCatalogueAdminController({
         ...current,
         variants: current.variants.map((variant) => {
           if (variant.id !== variantId) return variant;
-          const held = Number(variant.held) || 0;
+          const held = stockSummary?.variants.find((entry) => entry.variantId === variant.id)?.held ?? 0;
           const currentTotal = Number(variant.total) || 0;
           return { ...variant, total: Math.max(Math.max(1, held), currentTotal + delta) };
         }),
@@ -354,6 +365,8 @@ export function useCatalogueAdminController({
     coverImage,
     detailErrors,
     variantErrors,
+    stockSummaries,
+    stockSummary,
     hasValidationErrors,
     isDirty,
     updateDraft,

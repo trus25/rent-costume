@@ -5,10 +5,10 @@ import { Field, StatusPill } from '../../components/shared';
 import { defaultDates } from '../../mockData';
 import {
   formatDateRange,
-  getVariantAvailability,
   productName,
   variantLabel,
 } from '../../lib/rental-utils';
+import { getVariantAvailability } from '../../lib/availability';
 import CustomerFrame, { CustomerContentShell, CustomerPageIntro } from './CustomerFrame';
 import type { AppState } from '../../types/app';
 import type { Product, Rental, RentalRequest, TFunction } from '../../types/domain';
@@ -318,11 +318,6 @@ function sourceChannelLabel(request: RentalRequest) {
 
 function firstRequestableVariant(product: Product, dates: { start: string; end: string }, rentals: Rental[]) {
   return (
-    product.variants.find(
-      (variant) =>
-        getVariantAvailability(product, variant.id, dates, rentals) > 0 &&
-        getVariantAvailability(product, variant.id, dates) > 0,
-    ) ??
     product.variants.find((variant) => getVariantAvailability(product, variant.id, dates, rentals) > 0) ??
     product.variants[0]
   );

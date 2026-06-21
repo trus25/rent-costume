@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { getVariantAvailability } from '../../../lib/rental-utils';
+import { getVariantAvailability } from '../../../lib/availability';
 import type { CartItem, DateRange, Product, Rental } from '../../../types/domain';
 import type { StateSetter } from '../../../types/app';
 
